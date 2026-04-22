@@ -11,11 +11,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\LocationController;
-use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\EventReactionController; // 👈 EZT KERESTE!
 use App\Http\Controllers\FavoriteController;
-use App\Http\Controllers\GroupRequestController;
-use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Auth\ProfileApiController;
 
@@ -33,7 +30,6 @@ use App\Http\Controllers\Auth\ProfileApiController;
 Route::apiResource('countries', CountryController::class)->only(['index', 'show']);
 Route::apiResource('cities', CityController::class)->only(['index', 'show']);
 Route::apiResource('locations', LocationController::class)->only(['index', 'show']);
-Route::apiResource('event-types', EventTypeController::class)->only(['index', 'show']);
 
 // Események (FONTOS: a 'filter' legyen az '{id}' előtt!)
 Route::get('/events/filter', [EventController::class, 'filter']); 
@@ -65,7 +61,7 @@ Route::post('/login', function (Request $request) {
 // ==========================================
 // 🔒 2. VÉDETT ÚTVONALAK (Csak bejelentkezve)
 // ==========================================
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     
     // User info
     Route::get('/user', function (Request $request) { return $request->user(); });
@@ -79,8 +75,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/events/favorites', [FavoriteController::class, 'myFavorites']);
 
     // Egyéb funkciók
-    Route::apiResource('group-requests', GroupRequestController::class);
-    Route::apiResource('messages', MessageController::class);
     Route::apiResource('notifications', NotificationController::class);
 
     // Facebook frissítés (User is hívhatja?)
@@ -91,6 +85,10 @@ Route::middleware('auth:sanctum')->group(function () {
 // 👑 3. ADMIN ÚTVONALAK (Csak Admin)
 // ==========================================
 Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
+
+    // 🟢 ÚJ: Bulik jóváhagyása admin által
+    Route::post('/events/{id}/approve', [EventController::class, 'approve']);
+    
     Route::post('/events', [EventController::class, 'store']);
     Route::put('/events/{id}', [EventController::class, 'update']);
     Route::delete('/events/{id}', [EventController::class, 'destroy']);

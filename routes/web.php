@@ -23,7 +23,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // 🟢 1. KONKRÉT ÚTVONALAK
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // Profil kezelés
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -46,6 +46,10 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/events/{id}/json', [EventController::class, 'apiShow'])->name('events.json');
 
+    // 🟢 ÚJ: ADMIN DASHBOARD ÉS JÓVÁHAGYÁS 🟢
+    Route::get('/admin/dashboard', [EventController::class, 'adminDashboard'])->name('admin.dashboard');
+    Route::post('/admin/events/{id}/approve', [EventController::class, 'approveWeb'])->name('admin.events.approve');
+
     // 1. EZEK LEGYENEK ELÖL:
     Route::get('/admin/locations/{id}/edit', [LocationController::class, 'edit'])->name('admin.locations.edit');
     Route::put('/admin/locations/{id}', [LocationController::class, 'update'])->name('admin.locations.update');
@@ -65,5 +69,14 @@ Route::get('/events', function () {
 
 // 🟢 3. RÉSZLETEK (A végén)
 Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
+
+// 🟢 NYELVVÁLTÓ ÚTVONAL
+Route::get('/lang/{locale}', function ($locale) {
+    // Itt adhatod meg, milyen nyelveket engedélyezel (hu, en, de, stb.)
+    if (in_array($locale, ['hu', 'en'])) { 
+        session()->put('locale', $locale);
+    }
+    return redirect()->back();
+})->name('lang.switch');
 
 require __DIR__.'/auth.php';

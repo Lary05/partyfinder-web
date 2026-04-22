@@ -14,7 +14,7 @@ class Event extends Model
     protected $fillable = [
         'facebook_event_id', 'title', 'description', 'start_time', 'end_time',
         'location_id', 'facebook_url', 'ticket_url', 'image_url',
-        'interested_count', 'going_count', 'created_by', 'genre', 'age_limit'
+        'interested_count', 'going_count', 'created_by', 'genre', 'age_limit', 'status',
     ];
 
     protected $casts = [

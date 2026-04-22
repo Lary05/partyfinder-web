@@ -23,7 +23,7 @@
                     
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Search</label>
-                        <input type="text" x-model="filters.keyword" @input.debounce.500ms="fetchEvents()" 
+                        <input type="text" x-model="filters.keyword" @input.debounce.500ms="resetPageAndFetch()" 
                                class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-3 py-2" placeholder="Event name...">
                     </div>
 
@@ -45,7 +45,7 @@
 
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Venue</label>
-                        <select x-model="filters.location_id" @change="fetchEvents()" :disabled="!filters.city_id" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-3 py-2 disabled:opacity-50">
+                        <select x-model="filters.location_id" @change="resetPageAndFetch()" :disabled="!filters.city_id" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-3 py-2 disabled:opacity-50">
                             <option value="">-- All --</option>
                             <template x-for="venue in venues" :key="venue.id"><option :value="venue.id" x-text="venue.name"></option></template>
                         </select>
@@ -53,13 +53,13 @@
 
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Date</label>
-                        <input type="date" x-model="filters.date" @change="fetchEvents()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-3 py-2 [color-scheme:dark]">
+                        <input type="date" x-model="filters.date" @change="resetPageAndFetch()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-3 py-2 [color-scheme:dark]">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Genre</label>
-                            <select x-model="filters.genre" @change="fetchEvents()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-2 py-2 text-sm">
+                            <select x-model="filters.genre" @change="resetPageAndFetch()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-2 py-2 text-sm">
                                 <option value="all">All</option>
                                 <option value="Techno">Techno</option>
                                 <option value="House">House</option>
@@ -75,7 +75,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Age</label>
-                            <select x-model="filters.age_limit" @change="fetchEvents()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-2 py-2 text-sm">
+                            <select x-model="filters.age_limit" @change="resetPageAndFetch()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-2 py-2 text-sm">
                                 <option value="all">All</option>
                                 <option value="0">Any</option>
                                 <option value="16">16+</option>
@@ -84,13 +84,28 @@
                             </select>
                         </div>
                     </div>
-
                 </div>
-                <div class="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
-                    <button @click="getLocation()" class="text-sm text-blue-400 hover:text-blue-300 flex items-center font-medium">
-                        <i class="fas fa-location-arrow mr-2"></i> Find nearby events (GPS)
-                    </button>
-                    <span class="text-xs text-green-400 font-bold animate-pulse" x-show="userLat">📍 Location acquired!</span>
+
+                <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-700 pt-4 gap-4">
+                    <div class="flex items-center">
+                        <button @click="getLocation()" class="text-sm text-blue-400 hover:text-blue-300 flex items-center font-medium transition">
+                            <i class="fas fa-location-arrow mr-2"></i> Find nearby events (GPS)
+                        </button>
+                        <span class="text-xs text-green-400 font-bold animate-pulse ml-3" x-show="userLat">📍 Location acquired!</span>
+                    </div>
+
+                    <div class="flex items-center text-sm text-gray-400 gap-4">
+                        <span x-show="pagination.total > 0">Total: <span class="text-white font-bold" x-text="pagination.total"></span> events</span>
+                        <div class="flex items-center">
+                            <label class="mr-2">Show:</label>
+                            <select x-model="filters.per_page" @change="resetPageAndFetch()" class="bg-gray-900 border border-gray-600 rounded px-2 py-1 text-white focus:ring-blue-500">
+                                <option value="24">24</option>
+                                <option value="48">48</option>
+                                <option value="72">72</option>
+                                <option value="96">96</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -147,6 +162,24 @@
                     </div>
                 </template>
             </div>
+
+            <div x-show="pagination.last_page > 1" class="mt-12 flex justify-center items-center space-x-4">
+                <button @click="changePage(pagination.current_page - 1)" 
+                        :disabled="pagination.current_page === 1" 
+                        class="px-5 py-2.5 bg-gray-800 text-white rounded-lg border border-gray-600 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition font-bold shadow-lg">
+                    <i class="fas fa-chevron-left mr-2"></i> Previous
+                </button>
+
+                <div class="text-gray-400 font-medium">
+                    Page <span class="text-white font-bold text-lg mx-1" x-text="pagination.current_page"></span> / <span x-text="pagination.last_page"></span>
+                </div>
+
+                <button @click="changePage(pagination.current_page + 1)" 
+                        :disabled="pagination.current_page === pagination.last_page" 
+                        class="px-5 py-2.5 bg-gray-800 text-white rounded-lg border border-gray-600 hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition font-bold shadow-lg">
+                    Next <i class="fas fa-chevron-right ml-2"></i>
+                </button>
+            </div>
             
             <div x-show="!loading && events.length === 0" class="text-center py-20 bg-gray-800 rounded-xl border border-gray-700 mt-8">
                 <div class="text-6xl mb-4">😔</div>
@@ -172,7 +205,8 @@
             return {
                 events: [], countries: [], allCities: [], allVenues: [], cities: [], venues: [], 
                 loading: true, map: null, markers: [], mapExpanded: false, userLat: null, userLng: null,
-                filters: { keyword: '', country_id: '', city_id: '', location_id: '', date: '', genre: 'all', age_limit: 'all' },
+                filters: { keyword: '', country_id: '', city_id: '', location_id: '', date: '', genre: 'all', age_limit: 'all', page: 1, per_page: 24 },
+                pagination: { current_page: 1, last_page: 1, total: 0 },
 
                 init() { 
                     setTimeout(() => { this.initMap(); }, 100); 
@@ -209,20 +243,41 @@
                     this.filters.city_id = ''; this.filters.location_id = ''; this.venues = []; 
                     if(this.filters.country_id) { this.cities = this.allCities.filter(c => c.country_id == this.filters.country_id); } 
                     else { this.cities = []; }
-                    this.fetchEvents();
+                    this.resetPageAndFetch();
                 },
 
                 filterVenues() { 
                     this.filters.location_id = ''; 
                     if(this.filters.city_id) { this.venues = this.allVenues.filter(v => v.city_id == this.filters.city_id); }
                     else { this.venues = []; }
+                    this.resetPageAndFetch();
+                },
+
+                resetPageAndFetch() {
+                    this.filters.page = 1;
                     this.fetchEvents();
+                },
+
+                changePage(page) {
+                    if (page < 1 || page > this.pagination.last_page) return;
+                    this.filters.page = page;
+                    this.fetchEvents();
+                    window.scrollTo({ top: document.getElementById('events-grid').offsetTop - 100, behavior: 'smooth' });
                 },
 
                 fetchEvents() {
                     this.loading = true; const p = new URLSearchParams(this.filters).toString();
                     fetch(`/api/events/filter?${p}`).then(r => r.json()).then(d => {
                         this.events = d.data ? d.data : (Array.isArray(d) ? d : []); 
+                        
+                        if (d.current_page !== undefined) {
+                            this.pagination = {
+                                current_page: d.current_page,
+                                last_page: d.last_page,
+                                total: d.total
+                            };
+                        }
+
                         this.updateMap();
                         if(this.userLat) this.calculateAndSortEvents();
                         this.loading = false;

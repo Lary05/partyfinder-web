@@ -3,9 +3,9 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">Kezelt Szórakozóhelyek ({{ $pages->total() }})</h2>
+                <h2 class="text-2xl font-bold text-white">Managed Nightclubs ({{ $pages->total() }})</h2>
                 <a href="{{ route('admin.pages.create') }}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition flex items-center">
-                    <i class="fas fa-plus mr-2"></i> Új Hely Felvétele
+                    <i class="fas fa-plus mr-2"></i> Add New Location
                 </a>
             </div>
 
@@ -20,10 +20,10 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-gray-700 text-gray-300 text-sm uppercase tracking-wider">
-                                <th class="p-4 font-bold border-b border-gray-600">Név</th>
-                                <th class="p-4 font-bold border-b border-gray-600">Város</th>
+                                <th class="p-4 font-bold border-b border-gray-600">Name</th>
+                                <th class="p-4 font-bold border-b border-gray-600">City</th>
                                 <th class="p-4 font-bold border-b border-gray-600">Facebook Link</th>
-                                <th class="p-4 font-bold border-b border-gray-600 text-right">Műveletek</th>
+                                <th class="p-4 font-bold border-b border-gray-600 text-right">Operations</th>
                             </tr>
                         </thead>
                         <tbody class="text-gray-300 divide-y divide-gray-700">
@@ -37,7 +37,7 @@
                                     </td>
                                     <td class="p-4">
                                         <a href="{{ $page->url }}" target="_blank" class="text-blue-400 hover:text-blue-300 hover:underline flex items-center">
-                                            <i class="fab fa-facebook mr-2"></i> Megnyitás
+                                            <i class="fab fa-facebook mr-2"></i> Open
                                         </a>
                                     </td>
                                     <td class="p-4 text-right">
@@ -45,7 +45,7 @@
                                             
                                             {{-- ✏️ SZERKESZTÉS GOMB (ITT AZ ÚJ RÉSZ) --}}
                                             <a href="{{ route('admin.locations.edit', $page->id) }}" class="text-yellow-400 hover:text-yellow-300 transition flex items-center" title="Szerkesztés">
-                                                <i class="fas fa-edit mr-1"></i> Szerkesztés
+                                                <i class="fas fa-edit mr-1"></i> Edit
                                             </a>
 
                                             {{-- 🗑️ TÖRLÉS GOMB --}}
@@ -53,7 +53,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-400 hover:text-red-300 transition flex items-center" title="Törlés">
-                                                    <i class="fas fa-trash-alt mr-1"></i> Törlés
+                                                    <i class="fas fa-trash-alt mr-1"></i> Delete
                                                 </button>
                                             </form>
 

@@ -418,6 +418,7 @@ class ScrapeFacebookEvents extends Command
                             'description' => $description,
                             'start_time' => $startTime,
                             'location_id' => $location->id,
+                            'status' => 'approved',
                             'facebook_url' => $link,
                             // JAVÍTVA: Ha null, akkor legyen üres string, hogy ne szálljon el a kód
                             'image_url' => $imageUrl ?? '', 

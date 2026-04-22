@@ -5,15 +5,15 @@
             <div class="flex items-center justify-between mb-8">
                 <h1 class="text-3xl font-bold flex items-center">
                     <i class="fas fa-calendar-check mr-3 text-blue-500"></i>
-                    Eseményeim
+                    My events
                 </h1>
-                <a href="/" class="text-gray-400 hover:text-white transition">← Vissza a térképhez</a>
+                <a href="/" class="text-gray-400 hover:text-white transition">← Back to map</a>
             </div>
 
             <div class="mb-8 border-b border-gray-700">
                 <nav class="-mb-px flex space-x-8">
                     <span class="border-b-2 border-green-500 py-4 px-1 text-sm font-medium text-green-400">
-                        Visszajelzéseim
+                        My Feedbacks
                     </span>
                 </nav>
             </div>
@@ -21,10 +21,10 @@
             @if($events->isEmpty())
                 <div class="text-center py-20 bg-gray-800 rounded-2xl border border-gray-700">
                     <div class="text-6xl mb-4">📭</div>
-                    <h3 class="text-xl font-bold text-white">Még nem jelöltél be semmit.</h3>
-                    <p class="text-gray-400 mt-2">Nézz szét a főoldalon!</p>
+                    <h3 class="text-xl font-bold text-white">You haven't selected anything yet</h3>
+                    <p class="text-gray-400 mt-2">Look around on the main page!</p>
                     <a href="/" class="mt-6 inline-block bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold transition">
-                        Bulik keresése
+                        Find parties
                     </a>
                 </div>
             @else
@@ -56,7 +56,7 @@
                                         </span>
                                     @elseif($myReaction == 'interested')
                                         <span class="bg-yellow-600 text-white text-xs font-bold px-2 py-1 rounded uppercase shadow-lg flex items-center">
-                                            <i class="fas fa-star mr-1"></i> Érdekel
+                                            <i class="fas fa-star mr-1"></i> Interested
                                         </span>
                                     @endif
                                 </div>
@@ -80,7 +80,7 @@
                                     </div>
 
                                     <a href="{{ route('events.show', $event->id) }}" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-sm font-bold transition">
-                                        Megnyitás
+                                        Open
                                     </a>
                                 </div>
                             </div>

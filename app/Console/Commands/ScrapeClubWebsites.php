@@ -148,6 +148,7 @@ class ScrapeClubWebsites extends Command
                                 'description' => $eventData['description'] ?? 'Részletek az oldalon.',
                                 'start_time' => $eventData['start_time'],
                                 'location_id' => $location->id,
+                                'status' => 'approved',
                                 'image_url' => $eventData['image_url'] ?? '',
                                 'created_by' => 1,
                                 'genre' => $eventData['genre'] ?? 'Egyéb',

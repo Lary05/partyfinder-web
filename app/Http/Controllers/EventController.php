@@ -54,6 +54,9 @@ class EventController extends Controller
         // Betöltjük a kapcsolatokat, hogy később országra és városra is lehessen szűrni
         $query = \App\Models\Event::with(['location.city.country']);
 
+        // 🟢 ÚJ: CSAK AZ ELFOGADOTT (ÉLES) BULIKAT MUTASSA!
+        $query->where('status', 'approved');
+
         // Keresőmező
         if ($request->filled('keyword')) {
             $query->where('title', 'like', '%' . $request->keyword . '%');
@@ -97,7 +100,9 @@ class EventController extends Controller
         $query->whereDate('start_time', '>=', now()->toDateString());
 
         // Időrendbe tesszük
-        $events = $query->orderBy('start_time', 'asc')->get();
+        // Időrendbe tesszük és lapozzuk (alapból 12 db/oldal, ha a frontend mást nem kér)
+        $perPage = $request->input('per_page', 24);
+        $events = $query->orderBy('start_time', 'asc')->paginate($perPage);
         
         return response()->json($events);
     }
@@ -190,6 +195,9 @@ class EventController extends Controller
         }
 
         $data['created_by'] = Auth::id();
+
+        // 🟢 ÚJ: STÁTUSZ BEÁLLÍTÁSA (Ha Admin csinálja -> approved, ha user -> pending)
+        $data['status'] = Auth::user()->is_admin ? 'approved' : 'pending';
         
         // Alapértelmezett értékek, ha üresek
         $data['genre'] = $request->genre ?? 'Egyéb';
@@ -227,5 +235,33 @@ class EventController extends Controller
         if ($event->created_by !== Auth::id() && !Auth::user()->is_admin) abort(403);
         $event->delete();
         return redirect()->route('events.feed')->with('status', 'Törölve!');
+    }
+
+    // 11. ADMIN JÓVÁHAGYÁS (Approve)
+    public function approve($id) {
+        $event = Event::findOrFail($id);
+        $event->update(['status' => 'approved']);
+        return response()->json(['message' => 'Esemény sikeresen jóváhagyva és publikálva!']);
+    }
+
+    // Admin felület megjelenítése a várakozó bulikkal
+    public function adminDashboard()
+    {
+        // Csak admin mehet be
+        if (auth()->user()->role !== 'admin') abort(403);
+
+        $pendingEvents = Event::where('status', 'pending')->with('location')->get();
+        return view('admin.dashboard', compact('pendingEvents'));
+    }
+
+    // Jóváhagyás gomb logikája (Webes verzió)
+    public function approveWeb($id)
+    {
+        if (auth()->user()->role !== 'admin') abort(403);
+
+        $event = Event::findOrFail($id);
+        $event->update(['status' => 'approved']);
+
+        return back()->with('status', 'Event approved successfully!');
     }
 }

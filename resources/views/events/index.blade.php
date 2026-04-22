@@ -28,7 +28,7 @@
                     
                     {{-- 1. Keresés --}}
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Keresés</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Search</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -41,9 +41,9 @@
 
                     {{-- 2. Ország --}}
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Ország</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Country</label>
                         <select x-model="filters.country_id" @change="filterCities()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500">
-                            <option value="">-- Összes --</option>
+                            <option value="">-- All --</option>
                             <template x-for="country in countries" :key="country.id">
                                 <option :value="country.id" x-text="country.name"></option>
                             </template>
@@ -52,9 +52,9 @@
 
                     {{-- 3. Város --}}
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Város</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">City</label>
                         <select x-model="filters.city_id" @change="filterVenues()" :disabled="!filters.country_id" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-                            <option value="">-- Válassz --</option>
+                            <option value="">-- Select --</option>
                             <template x-for="city in cities" :key="city.id">
                                 <option :value="city.id" x-text="city.name"></option>
                             </template>
@@ -63,9 +63,9 @@
 
                     {{-- 4. Helyszín --}}
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Helyszín</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Location</label>
                         <select x-model="filters.location_id" @change="fetchEvents()" :disabled="!filters.city_id" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-                            <option value="">-- Összes --</option>
+                            <option value="">-- All --</option>
                             <template x-for="venue in venues" :key="venue.id">
                                 <option :value="venue.id" x-text="venue.name"></option>
                             </template>
@@ -74,16 +74,16 @@
 
                     {{-- 5. Dátum --}}
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Mikor?</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">When?</label>
                         <input type="date" x-model="filters.date" @change="fetchEvents()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 [color-scheme:dark]">
                     </div>
 
                     {{-- 6. Stílus és Korhatár (Egymás mellett) --}}
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Stílus</label>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Genre</label>
                             <select x-model="filters.genre" @change="fetchEvents()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500">
-                                <option value="all">Mind</option>
+                                <option value="all">All</option>
                                 <option value="Techno">Techno</option>
                                 <option value="House">House</option>
                                 <option value="Drum & Bass">DNB</option>
@@ -93,14 +93,14 @@
                                 <option value="R&B">R&B</option>
                                 <option value="Hip-Hop">Hip-Hop</option>
                                 <option value="Retro">Retro</option>
-                                <option value="Egyéb">Egyéb</option>
+                                <option value="Egyéb">Other</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Kor</label>
                             <select x-model="filters.age_limit" @change="fetchEvents()" class="w-full bg-gray-900 text-white border border-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500">
-                                <option value="all">Mind</option>
-                                <option value="0">Nincs</option>
+                                <option value="all">All</option>
+                                <option value="0">None</option>
                                 <option value="16">16+</option>
                                 <option value="18">18+</option>
                                 <option value="21">21+</option>
@@ -113,9 +113,9 @@
                 <div class="mt-4 flex items-center justify-between border-t border-gray-700 pt-4">
                     <button @click="getLocation()" class="text-sm text-blue-400 hover:text-blue-300 flex items-center font-medium transition">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        Közeli bulik keresése (GPS)
+                        Find nearby parties (GPS)
                     </button>
-                    <span class="text-xs text-green-400 font-bold animate-pulse" x-show="userLat">📍 Pozíció bemérve & Lista rendezve!</span>
+                    <span class="text-xs text-green-400 font-bold animate-pulse" x-show="userLat">📍 Position measured & List sorted!</span>
                 </div>
             </div>
 
@@ -125,7 +125,7 @@
                 <template x-if="loading">
                     <div class="col-span-full text-center py-20">
                         <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
-                        <p class="text-gray-400 mt-3">Éjszakai élet betöltése...</p>
+                        <p class="text-gray-400 mt-3">Nightlife loading...</p>
                     </div>
                 </template>
 
@@ -185,7 +185,7 @@
                                 </div>
 
                                 <a :href="'/events/' + event.id" class="text-white bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-bold transition shadow-lg shadow-blue-900/50">
-                                    Részletek
+                                    Details
                                 </a>
                             </div>
                         </div>
@@ -195,8 +195,8 @@
 
             <div x-show="!loading && events.length === 0" class="text-center py-20 bg-gray-800 rounded-xl border border-gray-700">
                 <div class="text-6xl mb-4">😔</div>
-                <h3 class="text-xl font-bold text-white">Sajnos nincs találat.</h3>
-                <p class="text-gray-400">Próbálj más várost vagy dátumot keresni!</p>
+                <h3 class="text-xl font-bold text-white">Unfortunately, no results were found.</h3>
+                <p class="text-gray-400">Try searching for a different city or date!</p>
             </div>
         </div>
     </div>

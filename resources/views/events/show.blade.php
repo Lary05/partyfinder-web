@@ -7,12 +7,12 @@
             
             <div class="flex justify-between items-center mb-6">
                 <a href="/" class="inline-flex items-center text-gray-400 hover:text-white transition">
-                    <i class="fas fa-arrow-left mr-2"></i> Vissza a főoldalra
+                    <i class="fas fa-arrow-left mr-2"></i> Back to main page
                 </a>
 
                 @if(auth()->check() && auth()->id() == $event->created_by)
                     <a href="{{ route('events.edit', $event->id) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition shadow-lg">
-                        <i class="fas fa-edit mr-2"></i> Szerkesztés
+                        <i class="fas fa-edit mr-2"></i> Edit
                     </a>
                 @endif
             </div>
@@ -46,7 +46,7 @@
                     </div>
 
                     <div class="bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-gray-700">
-                        <h2 class="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Részletek</h2>
+                        <h2 class="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Details</h2>
                         <div class="prose prose-invert max-w-none text-gray-300 whitespace-pre-line leading-relaxed">
                             {{ $event->description }}
                         </div>
@@ -55,25 +55,25 @@
                     <div class="block lg:hidden space-y-4">
                         @if($event->ticket_url)
                         <a href="{{ $event->ticket_url }}" target="_blank" class="block w-full text-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 rounded-xl shadow-lg transform hover:scale-[1.02] transition duration-300">
-                            <i class="fas fa-ticket-alt mr-2"></i> Jegyvásárlás
+                            <i class="fas fa-ticket-alt mr-2"></i> Ticket Purchase
                         </a>
                         @endif
 
                         @if($event->facebook_url && str_contains($event->facebook_url, 'facebook.com'))
                         <a href="{{ $event->facebook_url }}" target="_blank" class="block w-full text-center bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold py-3 rounded-xl shadow-lg transition">
-                            <i class="fab fa-facebook mr-2"></i> Facebook Esemény
+                            <i class="fab fa-facebook mr-2"></i> Facebook Event
                         </a>
                         @endif
 
                         <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 shadow-lg">
-                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4 text-center">Visszajelzés</h3>
+                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4 text-center">Feedback</h3>
                             <div class="flex gap-3">
                                 <form action="{{ route('events.react', $event->id) }}" method="POST" class="flex-1">
                                     @csrf
                                     <input type="hidden" name="type" value="interested">
                                     <button type="submit" class="w-full py-3 rounded-lg font-bold transition flex flex-col items-center justify-center {{ $event->auth_reaction == 'interested' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' : 'bg-gray-700 hover:bg-gray-600 text-gray-300' }}">
                                         <i class="fas fa-star mb-1 text-lg"></i>
-                                        <span class="text-xs">Érdekel</span>
+                                        <span class="text-xs">Interested</span>
                                         <span class="text-xs opacity-75">({{ $event->interested_count }})</span>
                                     </button>
                                 </form>
@@ -82,7 +82,7 @@
                     </div>
                     <div class="bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-gray-700">
                         <h2 class="text-xl font-bold text-white mb-6 flex items-center">
-                            <i class="fas fa-comments text-blue-500 mr-3"></i> Chat / Beszélgetés
+                            <i class="fas fa-comments text-blue-500 mr-3"></i> Chat / Talk
                         </h2>
 
                         <div class="space-y-6 mb-8 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
@@ -104,7 +104,7 @@
                                     </div>
                                 </div>
                             @empty
-                                <div class="text-center text-gray-500 py-4 italic">Még nincsenek hozzászólások. Légy te az első!</div>
+                                <div class="text-center text-gray-500 py-4 italic">There are no comments yet. Be the first!</div>
                             @endforelse
                         </div>
 
@@ -118,7 +118,7 @@
                             </form>
                         @else
                             <div class="text-center text-gray-400 bg-gray-900/50 rounded-lg p-3">
-                                <a href="{{ route('login') }}" class="text-blue-400 hover:underline">Jelentkezz be</a> a hozzászóláshoz!
+                                <a href="{{ route('login') }}" class="text-blue-400 hover:underline">Log in</a> to comment!
                             </div>
                         @endauth
                     </div>
@@ -129,7 +129,7 @@
                     <div class="hidden lg:block space-y-6">
                         @if($event->ticket_url)
                         <a href="{{ $event->ticket_url }}" target="_blank" class="block w-full text-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 rounded-xl shadow-lg transform hover:scale-[1.02] transition duration-300">
-                            <i class="fas fa-ticket-alt mr-2"></i> Jegyvásárlás
+                            <i class="fas fa-ticket-alt mr-2"></i> Ticket Purchase
                         </a>
                         @endif
 
@@ -140,14 +140,14 @@
                         @endif
 
                         <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 shadow-lg">
-                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4 text-center">Visszajelzés</h3>
+                            <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4 text-center">Feedback</h3>
                             <div class="flex gap-3">
                                 <form action="{{ route('events.react', $event->id) }}" method="POST" class="flex-1">
                                     @csrf
                                     <input type="hidden" name="type" value="interested">
                                     <button type="submit" class="w-full py-2 rounded-lg font-bold transition flex flex-col items-center justify-center {{ $event->auth_reaction == 'interested' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' : 'bg-gray-700 hover:bg-gray-600 text-gray-300' }}">
                                         <i class="fas fa-star mb-1 text-lg"></i>
-                                        <span class="text-xs">Érdekel</span>
+                                        <span class="text-xs">Interested</span>
                                         <span class="text-xs opacity-75">({{ $event->interested_count }})</span>
                                     </button>
                                 </form>

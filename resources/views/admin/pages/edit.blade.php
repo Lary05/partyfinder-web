@@ -5,7 +5,7 @@
             {{-- Címsor --}}
             <div class="mb-6">
                 <h2 class="text-2xl font-bold text-white">
-                    Helyszín szerkesztése: <span class="text-blue-400">{{ $location->name }}</span>
+                    Edit location: <span class="text-blue-400">{{ $location->name }}</span>
                 </h2>
             </div>
 
@@ -19,7 +19,7 @@
 
                     {{-- 1. Név --}}
                     <div class="mb-4">
-                        <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Helyszín Neve</label>
+                        <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Location Name</label>
                         <input type="text" name="name" id="name" 
                                class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500" 
                                value="{{ $location->name }}" required>
@@ -27,7 +27,7 @@
 
                     {{-- 2. Város --}}
                     <div class="mb-4">
-                        <label for="city_id" class="block text-sm font-medium text-gray-300 mb-2">Város</label>
+                        <label for="city_id" class="block text-sm font-medium text-gray-300 mb-2">City</label>
                         <select name="city_id" id="city_id" 
                                 class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500">
                             @foreach($cities as $city)
@@ -40,7 +40,7 @@
 
                     {{-- 3. Cím --}}
                     <div class="mb-4">
-                        <label for="address" class="block text-sm font-medium text-gray-300 mb-2">Pontos Cím</label>
+                        <label for="address" class="block text-sm font-medium text-gray-300 mb-2">Exact Address</label>
                         <input type="text" name="address" id="address" 
                                class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500" 
                                value="{{ $location->address }}">
@@ -50,13 +50,13 @@
                     {{-- 4. Koordináták (Egymás mellett) --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
-                            <label for="lat" class="block text-sm font-medium text-gray-300 mb-2">Szélesség (Lat)</label>
+                            <label for="lat" class="block text-sm font-medium text-gray-300 mb-2">Latitude (Lat)</label>
                             <input type="text" name="lat" id="lat" 
                                    class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500" 
                                    value="{{ $location->lat }}">
                         </div>
                         <div>
-                            <label for="lng" class="block text-sm font-medium text-gray-300 mb-2">Hosszúság (Lng)</label>
+                            <label for="lng" class="block text-sm font-medium text-gray-300 mb-2">Longitude (Lng)</label>
                             <input type="text" name="lng" id="lng" 
                                    class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500" 
                                    value="{{ $location->lng }}">
@@ -66,12 +66,12 @@
                     {{-- Gombok --}}
                     <div class="flex items-center gap-4">
                         <button type="submit" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg transition">
-                            💾 Mentés
+                            💾 Save
                         </button>
                         
                         {{-- Vissza gomb --}}
                         <a href="{{ route('admin.pages.index') }}" class="text-gray-400 hover:text-white transition">
-                            Mégse
+                            Cancel
                         </a>
                     </div>
 
