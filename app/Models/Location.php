@@ -18,7 +18,11 @@ class Location extends Model
         'address',
         'slug', // <--- EZT KERESTE A ROBOT!
         'lat',  // Koordináta
-        'lng'   // Koordináta
+        'lng',   // Koordináta
+        'url', 
+        'events_url', 
+        'scraper_driver', 
+        'last_scraped_at'
     ];
 
     /**

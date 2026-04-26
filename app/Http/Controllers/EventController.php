@@ -172,40 +172,57 @@ class EventController extends Controller
 
     // 6. ÚJ ESEMÉNY (Create)
     public function create() {
-        $locations = \App\Models\Location::with('city')->get();
-        return view('events.create', compact('locations'));
+        $locations = \App\Models\Location::with('city')->orderBy('name')->get();
+        $cities = \App\Models\City::orderBy('name')->get(); // A városokat is átadjuk az új helyszínhez!
+        
+        return view('events.create', compact('locations', 'cities'));
     }
 
     // 7. MENTÉS (Store) - 🔴 ITT VOLT A HIBA, JAVÍTVA!
     public function store(Request $request) {
         $request->validate([
             'title' => 'required|string|max:255',
-            'location_id' => 'required|exists:locations,id',
             'start_time' => 'required|date',
-            'image' => 'nullable|image|max:4096', // Validálás
+            'image' => 'nullable|image|max:4096',
+            'new_location_name' => 'nullable|string|max:255',
         ]);
 
-        // KIVESSZÜK az 'image' mezőt, hogy ne kerüljön az adatbázisba nyersen
-        $data = $request->except(['image', '_token']);
+        // Ellenőrizzük, hogy vagy régi helyszín, vagy új helyszín meg van-e adva
+        if (!$request->location_id && !$request->new_location_name) {
+            return back()->withErrors(['location_id' => __('Kérlek válassz egy helyszínt, vagy adj meg egy újat!')])->withInput();
+        }
 
-        // Fájl feltöltés kezelése
+        $locationId = $request->location_id;
+
+        // HA ÚJ HELYSZÍNT ADTAK MEG, először azt mentjük le
+        if ($request->filled('new_location_name')) {
+            $location = \App\Models\Location::create([
+                'name' => $request->new_location_name,
+                'city_id' => $request->new_location_city_id,
+                'address' => $request->new_location_address,
+                'lat' => $request->new_location_lat ?? 0,
+                'lng' => $request->new_location_lng ?? 0,
+            ]);
+            $locationId = $location->id;
+        }
+
+        // Kivesszük a felesleges adatokat, amik nem az Event táblába valók
+        $data = $request->except(['image', '_token', 'new_location_name', 'new_location_city_id', 'new_location_address', 'new_location_lat', 'new_location_lng']);
+        
+        $data['location_id'] = $locationId;
+        $data['created_by'] = Auth::id();
+        $data['status'] = Auth::user()->role === 'admin' ? 'approved' : 'pending';
+        $data['genre'] = $request->genre ?? 'Egyéb';
+        $data['age_limit'] = $request->age_limit ?? 0;
+
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('events', 'public');
             $data['image_url'] = '/storage/' . $path;
         }
 
-        $data['created_by'] = Auth::id();
-
-        // 🟢 ÚJ: STÁTUSZ BEÁLLÍTÁSA (Ha Admin csinálja -> approved, ha user -> pending)
-        $data['status'] = Auth::user()->is_admin ? 'approved' : 'pending';
-        
-        // Alapértelmezett értékek, ha üresek
-        $data['genre'] = $request->genre ?? 'Egyéb';
-        $data['age_limit'] = $request->age_limit ?? 0;
-
         Event::create($data);
 
-        return redirect()->route('events.feed')->with('status', 'Esemény létrehozva!');
+        return redirect()->route('events.feed')->with('status', __('Esemény sikeresen létrehozva!'));
     }
 
     // 8. SZERKESZTÉS (Edit)
