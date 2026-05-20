@@ -179,26 +179,43 @@ class EventController extends Controller
     }
 
     // 7. MENTÉS (Store) - 🔴 ITT VOLT A HIBA, JAVÍTVA!
+    // 7. MENTÉS (Store)
+    // 7. MENTÉS (Store)
     public function store(Request $request) {
         $request->validate([
             'title' => 'required|string|max:255',
             'start_time' => 'required|date',
             'image' => 'nullable|image|max:4096',
             'new_location_name' => 'nullable|string|max:255',
+            'new_city_name' => 'nullable|string|max:100', // 🟢 Ezt is validáljuk!
         ]);
 
-        // Ellenőrizzük, hogy vagy régi helyszín, vagy új helyszín meg van-e adva
         if (!$request->location_id && !$request->new_location_name) {
-            return back()->withErrors(['location_id' => __('Kérlek válassz egy helyszínt, vagy adj meg egy újat!')])->withInput();
+            return back()->withErrors(['location_id' => __('Please confirm the location first!')])->withInput();
         }
 
         $locationId = $request->location_id;
 
-        // HA ÚJ HELYSZÍNT ADTAK MEG, először azt mentjük le
+        // HA ÚJ HELYSZÍNT ADTAK MEG
         if ($request->filled('new_location_name')) {
+            
+            // 1. Város kiderítése vagy létrehozása a beírt név alapján!
+            $cityName = trim($request->new_city_name);
+            $defaultCountryId = \App\Models\Country::where('name', 'Hungary')->first()->id ?? 1;
+
+            $city = \App\Models\City::firstOrCreate(
+                ['name' => $cityName],
+                [
+                    'country_id' => $defaultCountryId,
+                    'slug' => \Illuminate\Support\Str::slug($cityName)
+                ]
+            );
+
+            // 2. Új helyszín mentése az okosan kiderített ID-kkal
             $location = \App\Models\Location::create([
                 'name' => $request->new_location_name,
-                'city_id' => $request->new_location_city_id,
+                'city_id' => $city->id,           // 🟢 Megvan az igazi város ID!
+                'country_id' => $city->country_id, // 🟢 És megvan az ország ID is!
                 'address' => $request->new_location_address,
                 'lat' => $request->new_location_lat ?? 0,
                 'lng' => $request->new_location_lng ?? 0,
@@ -206,8 +223,8 @@ class EventController extends Controller
             $locationId = $location->id;
         }
 
-        // Kivesszük a felesleges adatokat, amik nem az Event táblába valók
-        $data = $request->except(['image', '_token', 'new_location_name', 'new_location_city_id', 'new_location_address', 'new_location_lat', 'new_location_lng']);
+        // Kivesszük a felesleges adatokat
+        $data = $request->except(['image', '_token', 'new_location_name', 'new_city_name', 'new_location_address', 'new_location_lat', 'new_location_lng', 'location_confirmed']);
         
         $data['location_id'] = $locationId;
         $data['created_by'] = Auth::id();
@@ -222,7 +239,7 @@ class EventController extends Controller
 
         Event::create($data);
 
-        return redirect()->route('events.feed')->with('status', __('Esemény sikeresen létrehozva!'));
+        return redirect()->route('events.feed')->with('status', __('Event Announcement'));
     }
 
     // 8. SZERKESZTÉS (Edit)
