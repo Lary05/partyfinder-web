@@ -41,8 +41,8 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-400 mb-1">Facebook Event Link</label>
-                                <input type="url" name="facebook_url" value="{{ old('facebook_url', $event->facebook_url) }}" placeholder="https://facebook.com/events/..." class="w-full bg-gray-900 border-gray-600 rounded-lg text-white">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Facebook Event Link or ID</label>
+                                <input type="text" name="facebook_event_id" value="{{ old('facebook_event_id', $event->facebook_event_id) }}" placeholder="e.g. Facebook Event Link or ID" class="w-full bg-gray-900 border-gray-600 rounded-lg text-white">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-400 mb-1">Ticket Purchase Link</label>

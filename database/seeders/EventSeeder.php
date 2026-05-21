@@ -15,7 +15,7 @@ class EventSeeder extends Seeder
             'location_id' => 1,
             'start_time' => now(),
             'facebook_event_id' => 'FB12345',
-            'attending_count' => 100,
+            'image_url' => 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7',
             'interested_count' => 250
         ]);
     }

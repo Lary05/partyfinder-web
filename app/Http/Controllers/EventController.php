@@ -13,8 +13,18 @@ class EventController extends Controller
     // --- FELHASZNÁLÓI OLDALAK ---
 
     // 1. FŐOLDAL
-    public function index() {
-        return view('welcome');
+    public function index(Request $request) {
+        $events = Event::with(['location.city.country'])
+            ->where('status', 'approved')
+            ->whereDate('start_time', '>=', now()->toDateString())
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json($events);
+        }
+
+        return view('welcome', compact('events'));
     }
 
     // 2. RÉSZLETEK OLDAL (Show) - ✅ JAVÍTVA
@@ -103,6 +113,31 @@ class EventController extends Controller
         // Időrendbe tesszük és lapozzuk (alapból 12 db/oldal, ha a frontend mást nem kér)
         $perPage = $request->input('per_page', 24);
         $events = $query->orderBy('start_time', 'asc')->paginate($perPage);
+
+        // Fetch attendees count and user chip-in status
+        $userId = auth('sanctum')->id();
+        $eventIds = $events->pluck('id')->toArray();
+
+        $ticketCounts = \Illuminate\Support\Facades\DB::table('user_tickets')
+            ->whereIn('event_id', $eventIds)
+            ->selectRaw('event_id, count(*) as count')
+            ->groupBy('event_id')
+            ->pluck('count', 'event_id');
+
+        $userTickets = [];
+        if ($userId) {
+            $userTickets = \Illuminate\Support\Facades\DB::table('user_tickets')
+                ->where('user_id', $userId)
+                ->whereIn('event_id', $eventIds)
+                ->pluck('event_id')
+                ->toArray();
+        }
+
+        $events->getCollection()->transform(function ($event) use ($ticketCounts, $userTickets) {
+            $event->attendees_count = $ticketCounts[$event->id] ?? 0;
+            $event->user_chipped_in = in_array($event->id, $userTickets);
+            return $event;
+        });
         
         return response()->json($events);
     }
@@ -154,6 +189,53 @@ class EventController extends Controller
         return back();
     }
 
+    // ✅ CHIP IN (RSVP) MŰKÖDÉSE
+    public function toggleChipIn(Request $request, $id)
+    {
+        $userId = auth()->id();
+
+        if (!$userId) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
+        $existing = \Illuminate\Support\Facades\DB::table('user_tickets')
+            ->where('user_id', $userId)
+            ->where('event_id', $id)
+            ->first();
+
+        if ($existing) {
+            \Illuminate\Support\Facades\DB::table('user_tickets')
+                ->where('user_id', $userId)
+                ->where('event_id', $id)
+                ->delete();
+            $chippedIn = false;
+        } else {
+            try {
+                \Illuminate\Support\Facades\DB::table('user_tickets')->insert([
+                    'user_id' => $userId,
+                    'event_id' => $id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\DB::table('user_tickets')->insert([
+                    'user_id' => $userId,
+                    'event_id' => $id,
+                ]);
+            }
+            $chippedIn = true;
+        }
+
+        $attendeesCount = \Illuminate\Support\Facades\DB::table('user_tickets')
+            ->where('event_id', $id)
+            ->count();
+
+        return response()->json([
+            'chipped_in' => $chippedIn,
+            'attendees_count' => $attendeesCount
+        ]);
+    }
+
     // ✅ KOMMENT MENTÉSE (Mert a route-od ide mutat: storeComment)
     public function storeComment(Request $request, $id)
     {
@@ -188,6 +270,8 @@ class EventController extends Controller
             'image' => 'nullable|image|max:4096',
             'new_location_name' => 'nullable|string|max:255',
             'new_city_name' => 'nullable|string|max:100', // 🟢 Ezt is validáljuk!
+            'ticket_url' => 'nullable|url',
+            'facebook_event_id' => 'nullable|string',
         ]);
 
         if (!$request->location_id && !$request->new_location_name) {
@@ -253,6 +337,11 @@ class EventController extends Controller
     public function update(Request $request, Event $event) {
         if ($event->created_by !== Auth::id() && !Auth::user()->is_admin) abort(403);
         
+        $request->validate([
+            'ticket_url' => 'nullable|url',
+            'facebook_event_id' => 'nullable|string',
+        ]);
+        
         $data = $request->except(['image', '_token', '_method']);
         
         if ($request->hasFile('image')) {
@@ -297,5 +386,45 @@ class EventController extends Controller
         $event->update(['status' => 'approved']);
 
         return back()->with('status', 'Event approved successfully!');
+    }
+
+    // 12. TÉRKÉP API (Live Map)
+    public function getMapEvents()
+    {
+        // Fetch approved, upcoming/active events and eager load the location
+        $events = Event::with('location')
+            ->where('status', 'approved')
+            ->whereDate('start_time', '>=', now()->toDateString())
+            ->get();
+
+        // Note: The Event model already has an 'image_url' attribute which covers the thumbnail requirement natively.
+        // We don't need a separate eager load for photos since 'image_url' is on the table itself.
+
+        // Fetch attendees count and user chip-in status
+        $userId = auth('sanctum')->id();
+        $eventIds = $events->pluck('id')->toArray();
+
+        $ticketCounts = \Illuminate\Support\Facades\DB::table('user_tickets')
+            ->whereIn('event_id', $eventIds)
+            ->selectRaw('event_id, count(*) as count')
+            ->groupBy('event_id')
+            ->pluck('count', 'event_id');
+
+        $userTickets = [];
+        if ($userId) {
+            $userTickets = \Illuminate\Support\Facades\DB::table('user_tickets')
+                ->where('user_id', $userId)
+                ->whereIn('event_id', $eventIds)
+                ->pluck('event_id')
+                ->toArray();
+        }
+
+        $events->transform(function ($event) use ($ticketCounts, $userTickets) {
+            $event->attendees_count = $ticketCounts[$event->id] ?? 0;
+            $event->user_chipped_in = in_array($event->id, $userTickets);
+            return $event;
+        });
+
+        return response()->json($events);
     }
 }

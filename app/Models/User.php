@@ -23,7 +23,15 @@ class User extends Authenticatable implements MustVerifyEmail
     'password',
     'role',
     'notification_enabled',
-    'avatar_url'
+    'avatar_url',
+    'bio',
+    'age',
+    'birth_date',
+    'latitude',
+    'longitude',
+    'discovery_distance',
+    'discovery_min_age',
+    'discovery_max_age'
     ];
 
     /**
@@ -46,6 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'birth_date' => 'date',
         ];
     }
 
@@ -57,6 +66,37 @@ class User extends Authenticatable implements MustVerifyEmail
     public function reactions()
     {
         return $this->hasMany(EventReaction::class);
+    }
+
+    public function photos()
+    {
+        return $this->hasMany(UserPhoto::class);
+    }
+
+    public function swipes()
+    {
+        return $this->hasMany(UserSwipe::class, 'swiper_id');
+    }
+
+    public function swipedBy()
+    {
+        return $this->hasMany(UserSwipe::class, 'swiped_id');
+    }
+
+    /**
+     * Messages this user has sent.
+     */
+    public function sentMessages()
+    {
+        return $this->hasMany(DirectMessage::class, 'sender_id');
+    }
+
+    /**
+     * Messages this user has received.
+     */
+    public function receivedMessages()
+    {
+        return $this->hasMany(DirectMessage::class, 'receiver_id');
     }
 
     public function getIsAdminAttribute()

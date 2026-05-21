@@ -34,4 +34,22 @@ class ProfileApiController extends Controller
             'user'    => $user
         ]);
     }
+
+    public function uploadPhoto(Request $request)
+    {
+        $request->validate([
+            'photo' => 'required|image|max:5120', // max 5MB
+        ]);
+
+        $path = $request->file('photo')->store('photos', 'public');
+
+        \App\Models\UserPhoto::updateOrCreate(
+            ['user_id' => auth()->id()],
+            ['photo_url' => '/storage/' . $path]
+        );
+
+        return response()->json([
+            'photo_url' => asset('storage/' . $path)
+        ]);
+    }
 }

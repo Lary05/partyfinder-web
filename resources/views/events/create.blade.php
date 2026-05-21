@@ -120,6 +120,19 @@
                             </div>
                         </div>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-300 mb-2">{{ __('Ticket Purchase Link') }}</label>
+                                <input type="url" name="ticket_url" placeholder="e.g. https://cooltix.hu/..."
+                                       class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-300 mb-2">{{ __('Facebook Event Link or ID') }}</label>
+                                <input type="text" name="facebook_event_id" placeholder="e.g. Facebook Event Link or ID"
+                                       class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-sm font-bold text-gray-300 mb-2">{{ __('Description') }}</label>
                             <textarea name="description" rows="4" placeholder="{{ __('Write something about the party...') }}"

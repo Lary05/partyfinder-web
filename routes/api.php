@@ -15,6 +15,7 @@ use App\Http\Controllers\EventReactionController; // 👈 EZT KERESTE!
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Auth\ProfileApiController;
+use App\Http\Controllers\MessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +67,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // User info
     Route::get('/user', function (Request $request) { return $request->user(); });
     Route::put('/profile', [ProfileApiController::class, 'update']);
+    Route::post('/profile/photo', [ProfileApiController::class, 'uploadPhoto']);
+
+    // Swipe & Discover API
+    Route::get('/discover', [\App\Http\Controllers\SwipeController::class, 'discover']);
+    Route::post('/discover/recycle', [\App\Http\Controllers\SwipeController::class, 'recycle']);
+    Route::post('/swipe', [\App\Http\Controllers\SwipeController::class, 'swipe']);
+    Route::get('/matches', [\App\Http\Controllers\SwipeController::class, 'matches']);
+    Route::post('/settings/discovery', [\App\Http\Controllers\DiscoverySettingsController::class, 'update']);
 
     // Saját események (Ez védett kell legyen!)
     Route::get('/events/my', [EventController::class, 'myEvents']);
@@ -74,11 +83,21 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/events/{id}/favorite', [FavoriteController::class, 'toggle']);
     Route::get('/events/favorites', [FavoriteController::class, 'myFavorites']);
 
+    // 🎟️ Chip In
+    Route::post('/events/{event}/chip-in', [EventController::class, 'toggleChipIn']);
+
     // Egyéb funkciók
     Route::apiResource('notifications', NotificationController::class);
 
     // Facebook frissítés (User is hívhatja?)
     Route::post('/events/{id}/refresh-facebook', [EventController::class, 'refreshFacebookStats']);
+
+    // 💬 Közvetlen üzenetek (Live Chat)
+    Route::get('/messages/{user}',  [MessageController::class, 'getConversation']);
+    Route::post('/messages/{user}', [MessageController::class, 'sendMessage']);
+
+    // 🗺️ Live Map API
+    Route::get('/map/events', [EventController::class, 'getMapEvents']);
 });
 
 // ==========================================
