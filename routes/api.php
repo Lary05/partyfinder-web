@@ -75,6 +75,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
     Route::put('/profile', [ProfileApiController::class, 'update']);
     Route::post('/profile/photo', [ProfileApiController::class, 'uploadPhoto']);
+    Route::get('/profile/stats', [ProfileApiController::class, 'stats']);
 
     // 🃏 Swipe & Discover API
     Route::get('/discover', [SwipeController::class, 'discover']);

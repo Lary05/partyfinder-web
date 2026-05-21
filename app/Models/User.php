@@ -25,6 +25,8 @@ class User extends Authenticatable implements MustVerifyEmail
     'notification_enabled',
     'avatar_url',
     'bio',
+    'vibes',
+    'top_event_id',
     'age',
     'birth_date',
     'latitude',
@@ -33,6 +35,21 @@ class User extends Authenticatable implements MustVerifyEmail
     'discovery_min_age',
     'discovery_max_age'
     ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password'          => 'hashed',
+            'birth_date'        => 'date',
+            'vibes'             => 'array',   // JSON → PHP array automatically
+        ];
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -44,23 +61,19 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'birth_date' => 'date',
-        ];
-    }
+
 
     public function favoriteEvents()
     {
         return $this->belongsToMany(Event::class, 'favorites');
+    }
+
+    /**
+     * The user's pinned "top event" they plan to attend.
+     */
+    public function topEvent()
+    {
+        return $this->belongsTo(Event::class, 'top_event_id');
     }
 
     public function reactions()
