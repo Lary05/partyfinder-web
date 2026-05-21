@@ -20,48 +20,55 @@ class SwipeController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Get IDs of users already swiped on
+        // Akiket már elhúztál
         $swipedUserIds = UserSwipe::where('swiper_id', $user->id)
             ->pluck('swiped_id')
             ->toArray();
 
-        // Get discoverable users
         $query = User::with(['photos'])
             ->where('id', '!=', $user->id)
             ->whereNotIn('id', $swipedUserIds)
-            ->where('is_admin', false); // typically exclude admin
+            ->where('is_admin', false);
 
-        // Apply Age Filter
-        $minAge = clone now()->subYears($user->discovery_max_age); // Born after this date
-        $maxAge = clone now()->subYears($user->discovery_min_age); // Born before this date
+        // --- 1. KORSZŰRŐ (ENGEDÉKENY VERZIÓ) ---
+        $minAge = clone now()->subYears($user->discovery_max_age);
+        $maxAge = clone now()->subYears($user->discovery_min_age);
 
         $query->where(function ($q) use ($minAge, $maxAge, $user) {
-            // Include those with birth_date within the range
+            // A) Van születési dátuma és belefér
             $q->whereBetween('birth_date', [$minAge->toDateString(), $maxAge->toDateString()])
-              // Or fallback to existing age column if birth_date is null
+              // B) VAGY nincs dátum, de van kora és belefér
               ->orWhere(function ($q2) use ($user) {
                   $q2->whereNull('birth_date')
                      ->whereNotNull('age')
                      ->whereBetween('age', [$user->discovery_min_age, $user->discovery_max_age]);
+              })
+              // C) VAGY egyáltalán nincs kitöltve a kora, ezért "kegyelmet" kap
+              ->orWhere(function ($q3) {
+                  $q3->whereNull('birth_date')->whereNull('age');
               });
         });
 
-        // Apply Distance Filter (if user has coordinates)
+        // --- 2. TÁVOLSÁG SZŰRŐ (ENGEDÉKENY VERZIÓ) ---
         if ($user->latitude && $user->longitude) {
             $distanceInMeters = $user->discovery_distance * 1000;
-            // Haversine formula
             $haversine = "(6371 * acos(cos(radians($user->latitude)) 
                         * cos(radians(latitude)) 
                         * cos(radians(longitude) - radians($user->longitude)) 
                         + sin(radians($user->latitude)) 
                         * sin(radians(latitude)))) * 1000";
             
-            $query->whereRaw("{$haversine} <= ?", [$distanceInMeters]);
+            $query->where(function ($q) use ($haversine, $distanceInMeters) {
+                // A) Benne van a távolságban
+                $q->whereRaw("{$haversine} <= ?", [$distanceInMeters])
+                  // B) VAGY nincs még megadva a GPS koordinátája, így engedjük
+                  ->orWhereNull('latitude')
+                  ->orWhereNull('longitude');
+            });
         }
 
         $candidates = $query->get();
 
-        // Check if candidates also like the current user, so mobile app can get likesYou attribute
         foreach ($candidates as $candidate) {
             $likesAuth = UserSwipe::where('swiper_id', $candidate->id)
                 ->where('swiped_id', $user->id)
@@ -78,19 +85,25 @@ class SwipeController extends Controller
      */
     public function recycle(Request $request)
     {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        try {
+            // A te egyedi adatbázisodhoz igazítva: swiper_id és is_right_swipe
+            \Illuminate\Support\Facades\DB::table('user_swipes')
+                ->where('swiper_id', auth()->id())
+                ->where('is_right_swipe', false)
+                ->delete();
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'A balra húzott profilok sikeresen törölve!'
+            ]);
+            
+        } catch (\Exception $e) {
+            // Ha bármi baj van, írja ki pontosan, ne nyelje el!
+            return response()->json([
+                'success' => false, 
+                'message' => 'Szerver hiba történt a törlés során: ' . $e->getMessage()
+            ], 500);
         }
-
-        UserSwipe::where('swiper_id', $user->id)
-            ->where('is_right_swipe', false)
-            ->delete();
-
-        return response()->json([
-            'success' => true, 
-            'message' => 'Deck recycled'
-        ]);
     }
 
     /**
