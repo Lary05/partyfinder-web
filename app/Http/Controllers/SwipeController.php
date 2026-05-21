@@ -69,12 +69,19 @@ class SwipeController extends Controller
 
         $candidates = $query->get();
 
+        // Get all candidate IDs
+        $candidateIds = $candidates->pluck('id')->toArray();
+
+        // Fetch all candidates who have liked the auth user in a single query
+        $usersWhoLikedAuth = UserSwipe::whereIn('swiper_id', $candidateIds)
+            ->where('swiped_id', $user->id)
+            ->where('is_right_swipe', true)
+            ->pluck('swiper_id')
+            ->toArray();
+
+        // Check if candidates also like the current user, so mobile app can get likesYou attribute
         foreach ($candidates as $candidate) {
-            $likesAuth = UserSwipe::where('swiper_id', $candidate->id)
-                ->where('swiped_id', $user->id)
-                ->where('is_right_swipe', true)
-                ->exists();
-            $candidate->likes_you = $likesAuth;
+            $candidate->likes_you = in_array($candidate->id, $usersWhoLikedAuth);
         }
 
         return response()->json($candidates);
@@ -190,9 +197,21 @@ class SwipeController extends Controller
             ->where('is_right_swipe', true)
             ->pluck('swiper_id');
 
+        // Find users the auth user already has a conversation with
+        $authConvoIds = \Illuminate\Support\Facades\DB::table('conversation_participants')
+            ->where('user_id', $user->id)
+            ->pluck('conversation_id');
+
+        $messagedUserIds = \Illuminate\Support\Facades\DB::table('conversation_participants')
+            ->whereIn('conversation_id', $authConvoIds)
+            ->where('user_id', '!=', $user->id)
+            ->pluck('user_id')
+            ->toArray();
+
         // Fetch matched users with their photos
         $matchedUsers = User::with('photos')
             ->whereIn('id', $theyLikedMeIds)
+            ->whereNotIn('id', $messagedUserIds)
             ->get();
 
         return response()->json($matchedUsers);

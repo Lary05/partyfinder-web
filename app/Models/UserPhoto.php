@@ -11,7 +11,7 @@ class UserPhoto extends Model
 
     protected $table = 'user_photos';
 
-    protected $fillable = ['user_id', 'photo_url'];
+    protected $fillable = ['user_id', 'photo_url', 'sort_order'];
 
     public function user()
     {

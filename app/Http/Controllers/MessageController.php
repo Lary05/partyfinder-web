@@ -12,6 +12,75 @@ class MessageController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
+     * GET /api/conversations
+     *
+     * Return all active conversations the authenticated user is a part of.
+     * Includes the other participant's profile, latest message, and unread count.
+     */
+    public function getConversationsList(Request $request)
+    {
+        $authId = auth()->id();
+
+        // 1. Get all conversation IDs for the auth user
+        $authConvoIds = DB::table('conversation_participants')
+            ->where('user_id', $authId)
+            ->pluck('conversation_id');
+
+        if ($authConvoIds->isEmpty()) {
+            return response()->json([]);
+        }
+
+        // 2. Fetch the other participants for these conversations
+        $otherParticipants = DB::table('conversation_participants')
+            ->whereIn('conversation_id', $authConvoIds)
+            ->where('user_id', '!=', $authId)
+            ->get()
+            ->keyBy('conversation_id');
+
+        // Fetch User models for these other participants
+        $userIds = $otherParticipants->pluck('user_id')->unique();
+        $users = \App\Models\User::with('photos')->whereIn('id', $userIds)->get()->keyBy('id');
+
+        $conversations = [];
+
+        foreach ($authConvoIds as $convoId) {
+            $otherParticipant = $otherParticipants->get($convoId);
+            if (!$otherParticipant) continue;
+
+            $otherUser = $users->get($otherParticipant->user_id);
+            if (!$otherUser) continue;
+
+            $latestMessage = DB::table('messages')
+                ->where('conversation_id', $convoId)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Skip empty conversations with no messages
+            if (!$latestMessage) continue;
+
+            $unreadCount = DB::table('messages')
+                ->where('conversation_id', $convoId)
+                ->where('sender_id', '!=', $authId)
+                ->where('is_read', false)
+                ->count();
+
+            $conversations[] = [
+                'conversation_id' => $convoId,
+                'other_user' => $otherUser,
+                'latest_message' => $latestMessage,
+                'unread_count' => $unreadCount,
+            ];
+        }
+
+        // Order by latest message descending
+        usort($conversations, function ($a, $b) {
+            return strtotime($b['latest_message']->created_at) < strtotime($a['latest_message']->created_at) ? 1 : -1;
+        });
+
+        return response()->json($conversations);
+    }
+
+    /**
      * GET /api/messages/{user}
      *
      * Return all messages in the 1-on-1 conversation between the
@@ -49,25 +118,28 @@ class MessageController extends Controller
 
         $authId = auth()->id();
 
-        // Find or create the 1-on-1 conversation
-        $conversationId = $this->findConversationId($authId, $userId);
+        // We wrap everything in a transaction to prevent partial data (phantom conversations)
+        $message = DB::transaction(function () use ($authId, $userId, $request) {
+            // Find or create the 1-on-1 conversation
+            $conversationId = $this->findConversationId($authId, $userId);
 
-        if (!$conversationId) {
-            $conversationId = $this->createConversation($authId, $userId);
-        }
+            if (!$conversationId) {
+                $conversationId = $this->createConversation($authId, $userId);
+            }
 
-        // Insert the new message
-        $messageId = DB::table('messages')->insertGetId([
-            'conversation_id' => $conversationId,
-            'sender_id'       => $authId,
-            'content'         => $request->message,
-            'is_read'         => false,
-            'created_at'      => now(),
-            'updated_at'      => now(),
-        ]);
+            // Insert the new message
+            $messageId = DB::table('messages')->insertGetId([
+                'conversation_id' => $conversationId,
+                'sender_id'       => $authId,
+                'content'         => $request->message,
+                'is_read'         => false,
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
 
-        // Return the full message row so the mobile app gets all fields
-        $message = DB::table('messages')->find($messageId);
+            // Return the full message row so the mobile app gets all fields
+            return DB::table('messages')->find($messageId);
+        });
 
         return response()->json($message, 201);
     }

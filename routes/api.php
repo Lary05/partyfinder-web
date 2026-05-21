@@ -94,6 +94,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/events/{event}/chip-in', [EventController::class, 'toggleChipIn']);
 
     // 💬 Közvetlen üzenetek (Live Chat)
+    Route::get('/conversations', [MessageController::class, 'getConversationsList']);
     Route::get('/messages/{user}', [MessageController::class, 'getConversation']);
     Route::post('/messages/{user}', [MessageController::class, 'sendMessage']);
 
