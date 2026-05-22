@@ -27,13 +27,16 @@ class User extends Authenticatable implements MustVerifyEmail
     'bio',
     'vibes',
     'top_event_id',
+    'spotify_anthem',
     'age',
     'birth_date',
     'latitude',
     'longitude',
     'discovery_distance',
     'discovery_min_age',
-    'discovery_max_age'
+    'discovery_max_age',
+    'gender',
+    'discovery_gender'
     ];
 
     /**
@@ -48,6 +51,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password'          => 'hashed',
             'birth_date'        => 'date',
             'vibes'             => 'array',   // JSON → PHP array automatically
+            'spotify_anthem'    => 'array',
         ];
     }
 

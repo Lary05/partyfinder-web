@@ -57,10 +57,21 @@ class LocationController extends Controller
      */
     public function show($id)
     {
-        $location = Location::with(['city.country'])->find($id);
-        if (!$location) return response()->json(['message' => 'Helyszín nem található'], 404);
+        $location = Location::with([
+            'city.country',
+            'events' => function ($q) {
+                $q->where('date', '>=', now())->orderBy('date', 'asc');
+            }
+        ])->find($id);
 
-        return response()->json($location);
+        if (!$location) {
+            return response()->json(['message' => 'Helyszín nem található'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $location
+        ]);
     }
 
     // --- ITT VANNAK AZ ÚJ RÉSZEK A SZERKESZTÉSHEZ ---

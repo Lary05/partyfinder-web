@@ -21,6 +21,30 @@ class EventController extends Controller
             ->get();
 
         if ($request->wantsJson() || $request->is('api/*')) {
+            $userId = auth('sanctum')->id();
+            $eventIds = $events->pluck('id')->toArray();
+
+            $ticketCounts = \Illuminate\Support\Facades\DB::table('user_tickets')
+                ->whereIn('event_id', $eventIds)
+                ->selectRaw('event_id, count(*) as count')
+                ->groupBy('event_id')
+                ->pluck('count', 'event_id');
+
+            $userTickets = [];
+            if ($userId) {
+                $userTickets = \Illuminate\Support\Facades\DB::table('user_tickets')
+                    ->where('user_id', $userId)
+                    ->whereIn('event_id', $eventIds)
+                    ->pluck('event_id')
+                    ->toArray();
+            }
+
+            $events->transform(function ($event) use ($ticketCounts, $userTickets) {
+                $event->attendees_count = $ticketCounts[$event->id] ?? 0;
+                $event->user_chipped_in = in_array($event->id, $userTickets);
+                return $event;
+            });
+
             return response()->json($events);
         }
 
@@ -38,19 +62,25 @@ class EventController extends Controller
     }
 
     // 3. SAJÁT ESEMÉNYEK (My Events) - ✅ JAVÍTVA
-    public function myEvents()
+    public function myEvents(Request $request)
     {
         if (!Auth::check()) return redirect()->route('login');
 
         $user = Auth::user();
 
-        // Lekérjük azokat, amikre a user reagált
-        $reactedEventIds = EventReaction::where('user_id', $user->id)->pluck('event_id');
+        // Lekérjük azokat, amikre a user vett jegyet (user_tickets)
+        $ticketEventIds = \Illuminate\Support\Facades\DB::table('user_tickets')
+            ->where('user_id', $user->id)
+            ->pluck('event_id');
         
-        $events = Event::whereIn('id', $reactedEventIds)
+        $events = Event::whereIn('id', $ticketEventIds)
                        ->with('location')
                        ->orderBy('start_time', 'asc')
                        ->get();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json($events);
+        }
 
         // FONTOS: Ellenőrizd, hogy a fájl a resources/views/events/ mappában van-e!
         return view('events.my_events', compact('events')); 
@@ -210,17 +240,23 @@ class EventController extends Controller
                 ->delete();
             $chippedIn = false;
         } else {
+            // Generálunk egy egyedi, 10 karakteres nagybetűs jegykódot
+            $ticketCode = strtoupper(\Illuminate\Support\Str::random(10));
+
             try {
                 \Illuminate\Support\Facades\DB::table('user_tickets')->insert([
                     'user_id' => $userId,
                     'event_id' => $id,
+                    'ticket_code' => $ticketCode, // <-- ITT A JAVÍTÁS
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             } catch (\Exception $e) {
+                // Ha az exception azért van, mert nincs created_at/updated_at a táblában:
                 \Illuminate\Support\Facades\DB::table('user_tickets')->insert([
                     'user_id' => $userId,
                     'event_id' => $id,
+                    'ticket_code' => $ticketCode, // <-- ITT A JAVÍTÁS
                 ]);
             }
             $chippedIn = true;

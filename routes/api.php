@@ -70,9 +70,7 @@ Route::post('/login', function (Request $request) {
 Route::middleware(['auth:sanctum'])->group(function () {
     
     // 👤 User info és Profil
-    Route::get('/user', function (Request $request) { 
-        return $request->user(); 
-    });
+    Route::get('/user', [ProfileApiController::class, 'me']);
     Route::put('/profile', [ProfileApiController::class, 'update']);
     Route::post('/profile/photo', [ProfileApiController::class, 'uploadPhoto']);
     Route::get('/profile/stats', [ProfileApiController::class, 'stats']);

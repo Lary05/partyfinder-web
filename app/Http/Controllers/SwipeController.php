@@ -25,7 +25,7 @@ class SwipeController extends Controller
             ->pluck('swiped_id')
             ->toArray();
 
-        $query = User::with(['photos'])
+        $query = User::with(['photos', 'topEvent.location.city'])
             ->where('id', '!=', $user->id)
             ->whereNotIn('id', $swipedUserIds)
             ->where('is_admin', false);

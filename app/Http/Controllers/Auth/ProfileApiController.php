@@ -11,6 +11,29 @@ use Illuminate\Support\Facades\Storage;
 class ProfileApiController extends Controller
 {
     /**
+     * Get the authenticated user's profile data.
+     */
+    public function me(Request $request)
+    {
+        $user = $request->user()->load([
+            'topEvent.location.city',
+            'photos',
+        ]);
+
+        $myEvents = \Illuminate\Support\Facades\DB::table('user_tickets')
+            ->join('events', 'user_tickets.event_id', '=', 'events.id')
+            ->where('user_tickets.user_id', $user->id)
+            ->where('events.date', '>=', now())
+            ->select('events.id', 'events.name as title')
+            ->get();
+
+        return response()->json([
+            'user'      => $user,
+            'my_events' => $myEvents,
+        ]);
+    }
+
+    /**
      * Update the authenticated user's profile (name, bio, email, password).
      */
     public function update(Request $request)
@@ -18,20 +41,38 @@ class ProfileApiController extends Controller
         $user = $request->user();
 
         $request->validate([
-            'name'         => 'sometimes|string|max:255',
-            'bio'          => 'sometimes|string|max:1000|nullable',
-            'email'        => 'sometimes|email|max:255|unique:users,email,' . $user->id,
-            'password'     => 'sometimes|string|min:6',
-            'vibes'        => 'sometimes|array',
-            'vibes.*'      => 'string|max:100',
-            'top_event_id' => 'sometimes|integer|nullable',
+            'name'           => 'sometimes|string|max:255',
+            'bio'            => 'sometimes|string|max:1000|nullable',
+            'email'          => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+            'password'       => 'sometimes|string|min:6',
+            'vibes'          => 'sometimes|array',
+            'vibes.*'        => 'string|max:100',
+            'top_event_id'   => [
+                'sometimes',
+                'nullable',
+                'integer',
+                function ($attribute, $value, $fail) use ($user) {
+                    if ($value) {
+                        $hasTicket = \Illuminate\Support\Facades\DB::table('user_tickets')
+                            ->where('user_id', $user->id)
+                            ->where('event_id', $value)
+                            ->exists();
+                        
+                        if (!$hasTicket) {
+                            $fail('Csak olyan eseményt választhatsz Top Eventnek, amire jelentkeztél.');
+                        }
+                    }
+                }
+            ],
+            'spotify_anthem' => 'sometimes|array|nullable',
         ]);
 
-        if ($request->has('name'))         $user->name         = $request->name;
-        if ($request->has('bio'))          $user->bio          = $request->bio;
-        if ($request->has('email'))        $user->email        = $request->email;
-        if ($request->has('vibes'))        $user->vibes        = $request->vibes;      // auto-cast to JSON
-        if ($request->has('top_event_id')) $user->top_event_id = $request->top_event_id;
+        if ($request->has('name'))           $user->name           = $request->name;
+        if ($request->has('bio'))            $user->bio            = $request->bio;
+        if ($request->has('email'))          $user->email          = $request->email;
+        if ($request->has('vibes'))          $user->vibes          = $request->vibes;
+        if ($request->has('top_event_id'))   $user->top_event_id   = $request->top_event_id;
+        if ($request->has('spotify_anthem')) $user->spotify_anthem = $request->spotify_anthem;
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
