@@ -51,4 +51,34 @@ class AuthController extends Controller
             'token'   => $token
         ], 201);
     }
+
+    public function login(Request $request)
+    {
+        // 1. Kötelező adatok ellenőrzése (Ez védi meg a szervert a 500-as hibától!)
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => 'Hiányzó vagy hibás adatok',
+                'messages' => $validator->errors()
+            ], 422);
+        }
+
+        // 2. Felhasználó megkeresése
+        $user = User::where('email', $request->email)->first();
+
+        // 3. Jelszó ellenőrzése
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'Hibás email vagy jelszó'], 401);
+        }
+
+        // 4. Token generálása és válasz
+        return response()->json([
+            'user' => $user,
+            'token' => $user->createToken('auth_token')->plainTextToken
+        ]);
+    }
 }

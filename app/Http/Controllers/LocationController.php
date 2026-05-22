@@ -57,21 +57,31 @@ class LocationController extends Controller
      */
     public function show($id)
     {
-        $location = Location::with([
-            'city.country',
-            'events' => function ($q) {
-                $q->where('date', '>=', now())->orderBy('date', 'asc');
+        try {
+            $location = Location::with([
+                'city.country',
+                'events' => function ($q) {
+                    $q->where('start_time', '>=', now())->orderBy('start_time', 'asc');
+                }
+            ])->find($id);
+
+            if (!$location) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Helyszín nem található'
+                ], 404);
             }
-        ])->find($id);
 
-        if (!$location) {
-            return response()->json(['message' => 'Helyszín nem található'], 404);
+            return response()->json([
+                'success' => true,
+                'data' => $location
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hiba történt a helyszín betöltésekor: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $location
-        ]);
     }
 
     // --- ITT VANNAK AZ ÚJ RÉSZEK A SZERKESZTÉSHEZ ---
@@ -153,4 +163,5 @@ class LocationController extends Controller
         if (request()->wantsJson()) return response()->json(['message' => 'Helyszín törölve']);
         return redirect()->back()->with('success', 'Helyszín törölve');
     }
+    
 }

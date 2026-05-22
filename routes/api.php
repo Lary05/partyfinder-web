@@ -50,18 +50,9 @@ Route::get('/locations', function (Request $request) {
     return Location::all();
 });
 
-// Regisztráció és Login (JSON válaszokkal)
+/// Regisztráció és Login
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', function (Request $request) {
-    $user = User::where('email', $request->email)->first();
-    if (! $user || ! Hash::check($request->password, $user->password)) {
-        return response()->json(['error' => 'Hibás adatok'], 401);
-    }
-    return response()->json([
-        'user' => $user,
-        'token' => $user->createToken('auth_token')->plainTextToken
-    ]);
-});
+Route::post('/login', [AuthController::class, 'login']);
 
 
 // ==========================================
